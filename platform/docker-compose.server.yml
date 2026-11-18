@@ -1,0 +1,136 @@
+name: cctv-platform-server
+
+x-backend-environment: &backend-environment
+  NODE_ENV: production
+  MONGODB_URI: mongodb://mongodb:27017/cctv_platform?replicaSet=rs0
+  RABBITMQ_URL: amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672
+  MEDIA_STAGING_DIR: /data/staging-media
+  R2_ENDPOINT: ${R2_ENDPOINT}
+  R2_REGION: ${R2_REGION:-auto}
+  R2_ACCESS_KEY_ID: ${R2_ACCESS_KEY_ID}
+  R2_SECRET_ACCESS_KEY: ${R2_SECRET_ACCESS_KEY}
+  R2_BUCKET: ${R2_BUCKET:-cctv-events}
+  TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+
+x-backend-depends: &backend-depends
+  mongodb:
+    condition: service_healthy
+  rabbitmq:
+    condition: service_healthy
+
+services:
+  mongodb:
+    image: mongo:8.0
+    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all']
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 4s
+      retries: 20
+    restart: always
+
+  mediamtx:
+    image: bluenviron/mediamtx:1.21.4
+    environment:
+      MTX_WEBRTCADDITIONALHOSTS: ${MEDIAMTX_WEBRTC_HOSTS}
+    ports:
+      - '${MEDIAMTX_RTSP_PORT:-8554}:8554'
+      - '${MEDIAMTX_HLS_PORT:-8888}:8888'
+      - '${MEDIAMTX_WEBRTC_PORT:-8889}:8889'
+      - '${MEDIAMTX_ICE_PORT:-8189}:8189/udp'
+    volumes:
+      - ./infrastructure/mediamtx.yml:/mediamtx.yml:ro
+    restart: always
+
+  mongo-init:
+    image: mongo:8.0
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    volumes:
+      - ./infrastructure/mongo-init.js:/init.js:ro
+    entrypoint: ['mongosh', 'mongodb://mongodb:27017/admin', '/init.js']
+    restart: 'no'
+
+  rabbitmq:
+    image: rabbitmq:4.1-management-alpine
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: always
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      args: { APP: api }
+    environment:
+      <<: *backend-environment
+      API_PORT: 4000
+      DASHBOARD_ORIGIN: ${DASHBOARD_ORIGIN}
+    depends_on: *backend-depends
+    volumes:
+      - media-staging:/data/staging-media
+    restart: always
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:4000/api/health']
+      interval: 15s
+      timeout: 4s
+      retries: 8
+
+  event-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      args: { APP: event-worker }
+    environment: *backend-environment
+    depends_on: *backend-depends
+    restart: always
+
+  media-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      args: { APP: media-worker }
+    environment: *backend-environment
+    depends_on: *backend-depends
+    volumes:
+      - media-staging:/data/staging-media
+    restart: always
+
+  telegram-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+      args: { APP: telegram-worker }
+    environment: *backend-environment
+    depends_on: *backend-depends
+    restart: always
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: apps/dashboard/Dockerfile
+      args:
+        VITE_API_URL: /api
+        VITE_SOCKET_URL: /
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - '${PLATFORM_HTTP_PORT:-8080}:80'
+    restart: always
+
+volumes:
+  mongodb-data:
+  rabbitmq-data:
+  media-staging:

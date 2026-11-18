@@ -1,0 +1,222 @@
+.camera-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.camera-card {
+  overflow: hidden;
+  padding: 0;
+}
+.camera-card__visual {
+  position: relative;
+  display: grid;
+  height: 122px;
+  place-items: center;
+  overflow: hidden;
+  color: #435965;
+  background: linear-gradient(135deg, #0c151d, #14232d);
+}
+.camera-card__visual .badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+.camera-card__grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.13;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.12) 1px, transparent 1px);
+  background-size: 25px 25px;
+}
+.camera-card__body {
+  padding: 18px;
+}
+.camera-card__title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.camera-card__title h2 {
+  color: #e1eaed;
+  font-size: 15px;
+  font-weight: 620;
+}
+.camera-card__title span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 5px;
+  color: #637781;
+  font-size: 11px;
+}
+.camera-card__url {
+  overflow: hidden;
+  margin: 15px 0;
+  color: #4f626c;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.camera-card__meta {
+  display: flex;
+  gap: 16px;
+  color: #738791;
+  font-size: 11px;
+}
+.camera-card__meta span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.camera-card__actions {
+  display: flex;
+  gap: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 10px 12px;
+}
+.camera-card__actions .button:first-child {
+  flex: 1;
+}
+
+.schedule-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 14px;
+}
+.day-picker {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+.day-picker button {
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 7px;
+  color: #657984;
+  background: transparent;
+  padding: 8px 2px;
+  font-size: 10px;
+}
+.day-picker button.selected {
+  color: #8de2d1;
+  border-color: rgba(62, 185, 163, 0.3);
+  background: rgba(62, 185, 163, 0.09);
+}
+.time-windows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.time-window {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.time-window input {
+  min-width: 0;
+}
+.time-window span {
+  color: #637781;
+  font-size: 11px;
+}
+
+.zone-editor-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(320px, 0.65fr);
+  gap: 18px;
+  align-items: start;
+}
+.zone-editor-canvas {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: #101922;
+}
+.canvas-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  color: #718590;
+  font-size: 11px;
+}
+.canvas-hint .button {
+  margin-left: auto;
+}
+.zone-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.zone-list {
+  display: flex;
+  flex-direction: column;
+}
+.zone-list__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 11px 0;
+}
+.zone-list__item:first-child {
+  border: 0;
+}
+.zone-list__item > div {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+}
+.zone-list__item strong {
+  color: #dce7eb;
+  font-size: 12px;
+}
+.zone-list__item small {
+  color: #5f737d;
+  font-size: 10px;
+}
+.zone-swatch {
+  width: 18px;
+  height: 3px;
+  border-radius: 4px;
+  background: #55d8bd;
+}
+.zone-swatch--polygon {
+  height: 15px;
+  border: 1px solid #55d8bd;
+  background: rgba(85, 216, 189, 0.14);
+}
+.icon-button {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  color: #718590;
+  background: transparent;
+}
+.icon-button:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+@media (max-width: 1200px) {
+  .camera-card-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .zone-editor-layout {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 760px) {
+  .camera-card-grid {
+    grid-template-columns: 1fr;
+  }
+}

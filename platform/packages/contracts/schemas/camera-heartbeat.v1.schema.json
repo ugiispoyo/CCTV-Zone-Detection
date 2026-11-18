@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cctv.local/contracts/camera-heartbeat.v1.schema.json",
+  "title": "CameraHeartbeatV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status"],
+  "properties": {
+    "status": {
+      "enum": ["inactive", "scheduled-off", "connecting", "online", "reconnecting", "error"]
+    },
+    "error": { "type": "string", "maxLength": 1000 }
+  }
+}

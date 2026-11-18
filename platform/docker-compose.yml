@@ -1,0 +1,59 @@
+name: cctv-platform-infrastructure
+
+services:
+  mongodb:
+    image: mongo:7
+    command: ['mongod', '--replSet', 'rs0', '--bind_ip_all']
+    ports:
+      - '${MONGODB_PORT:-27017}:27017'
+    volumes:
+      - mongodb-data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 4s
+      retries: 20
+    restart: unless-stopped
+
+  mongo-init:
+    image: mongo:7
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    volumes:
+      - ./infrastructure/mongo-init.js:/init.js:ro
+    entrypoint: ['mongosh', 'mongodb://mongodb:27017/admin', '/init.js']
+    restart: 'no'
+
+  rabbitmq:
+    image: rabbitmq:4.1-management-alpine
+    ports:
+      - '${RABBITMQ_PORT:-5672}:5672'
+      - '${RABBITMQ_MANAGEMENT_PORT:-15672}:15672'
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  mediamtx:
+    image: bluenviron/mediamtx:1.21.4
+    environment:
+      MTX_WEBRTCADDITIONALHOSTS: ${MEDIAMTX_WEBRTC_HOSTS:-localhost}
+    ports:
+      - '${MEDIAMTX_RTSP_PORT:-8554}:8554'
+      - '${MEDIAMTX_HLS_PORT:-8888}:8888'
+      - '${MEDIAMTX_WEBRTC_PORT:-8889}:8889'
+      - '${MEDIAMTX_ICE_PORT:-8189}:8189/udp'
+      - '${MEDIAMTX_API_PORT:-9997}:9997'
+      - '${MEDIAMTX_METRICS_PORT:-9998}:9998'
+    volumes:
+      - ./infrastructure/mediamtx.yml:/mediamtx.yml:ro
+    restart: unless-stopped
+
+volumes:
+  mongodb-data:
+  rabbitmq-data:

@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cctv.local/contracts/detection-event.v2.schema.json",
+  "title": "DetectionEventV2",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion", "eventId", "cameraId", "zoneId", "trackId", "objectType",
+    "occurredAt", "confidence", "objectBox", "trigger"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "2.0" },
+    "eventId": { "type": "string", "format": "uuid" },
+    "cameraId": { "$ref": "#/$defs/objectId" },
+    "zoneId": { "$ref": "#/$defs/objectId" },
+    "trackId": { "type": "string", "minLength": 1, "maxLength": 160 },
+    "objectType": { "enum": ["person", "car", "motorcycle", "head"] },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "objectBox": { "$ref": "#/$defs/box" },
+    "headBox": { "$ref": "#/$defs/box" },
+    "faceBox": { "$ref": "#/$defs/box" },
+    "trigger": { "enum": ["line-crossed", "zone-entered"] },
+    "direction": { "type": "string", "maxLength": 64 }
+  },
+  "$defs": {
+    "objectId": { "type": "string", "pattern": "^[a-fA-F0-9]{24}$" },
+    "box": {
+      "type": "object", "additionalProperties": false,
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": { "type": "number", "minimum": 0, "maximum": 1 },
+        "y": { "type": "number", "minimum": 0, "maximum": 1 },
+        "width": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+        "height": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}

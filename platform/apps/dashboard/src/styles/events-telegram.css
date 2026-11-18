@@ -1,0 +1,219 @@
+.filter-select {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #718590;
+  font-size: 11px;
+}
+.filter-select select {
+  width: 190px;
+}
+.event-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.event-card {
+  overflow: hidden;
+  padding: 0;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    transform 0.15s;
+}
+.event-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(95, 211, 189, 0.22);
+}
+.event-card__media {
+  display: flex;
+  height: 130px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  color: #40545f;
+  background: linear-gradient(135deg, #0c151d, #14212a);
+  font-size: 10px;
+}
+.event-card__body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px;
+}
+.event-card__body > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+}
+.event-card__body strong {
+  overflow: hidden;
+  color: #dce7eb;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.event-card__body small {
+  color: #61757f;
+  font-size: 10px;
+}
+.event-card footer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 10px 14px;
+  color: #627680;
+  font-size: 10px;
+}
+.event-card footer span {
+  margin-left: auto;
+  color: #84b9ae;
+}
+.event-detail {
+  padding: 20px;
+}
+.media-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+.media-gallery figure {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4/3;
+  margin: 0;
+  border-radius: 9px;
+  background: #0b1118;
+}
+.media-gallery img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.media-gallery figcaption {
+  position: absolute;
+  inset: auto 8px 8px;
+  color: white;
+  font-size: 10px;
+  text-transform: uppercase;
+  text-shadow: 0 1px 5px #000;
+}
+.media-missing {
+  display: grid;
+  place-items: center;
+  color: #40545f;
+}
+.media-missing figcaption {
+  position: static;
+  color: #566a74;
+  text-shadow: none;
+}
+.event-video {
+  width: 100%;
+  margin-top: 12px;
+  border-radius: 9px;
+  background: #070b0f;
+}
+
+.recipient-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.recipient-card {
+  display: grid;
+  grid-template-columns: auto minmax(180px, 1fr) minmax(180px, 0.8fr) auto auto;
+  align-items: center;
+  gap: 16px;
+  padding: 15px 18px;
+}
+.recipient-card__icon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 9px;
+  color: #6bc8ef;
+  background: rgba(65, 170, 216, 0.1);
+}
+.recipient-card > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.recipient-card strong {
+  color: #dce7eb;
+  font-size: 13px;
+}
+.recipient-card small,
+.recipient-card__scope span {
+  color: #61757f;
+  font-size: 11px;
+}
+.recipient-card__scope {
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.camera-checklist {
+  display: grid;
+  max-height: 210px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 7px;
+  overflow-y: auto;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 9px;
+}
+.camera-checklist label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-radius: 7px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
+.camera-checklist input {
+  accent-color: #3eb9a3;
+}
+.camera-checklist span {
+  display: flex;
+  flex-direction: column;
+  color: #c7d3d8;
+  font-size: 12px;
+}
+.camera-checklist small {
+  color: #5d707a;
+  font-size: 9px;
+}
+
+@media (max-width: 1200px) {
+  .event-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 760px) {
+  .event-grid {
+    grid-template-columns: 1fr;
+  }
+  .recipient-card {
+    grid-template-columns: auto 1fr auto;
+  }
+  .recipient-card__scope {
+    grid-column: 2 / -1;
+  }
+  .recipient-card > .button {
+    grid-row: 2;
+  }
+  .media-gallery {
+    grid-template-columns: 1fr;
+  }
+  .camera-checklist {
+    grid-template-columns: 1fr;
+  }
+}

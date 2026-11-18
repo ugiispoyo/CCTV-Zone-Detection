@@ -1,0 +1,70 @@
+asyncapi: 3.0.0
+info:
+  title: CCTV Platform Messaging Contract
+  version: 1.0.0
+  description: Durable RabbitMQ messages exchanged by the CV service and platform workers.
+servers:
+  development:
+    host: localhost:5672
+    protocol: amqp
+    description: Local RabbitMQ from docker-compose.yml
+channels:
+  detectionCreated:
+    address: cctv.detections/detection.created.v2
+    messages:
+      detectionEvent:
+        $ref: '#/components/messages/DetectionEvent'
+  cameraConfigurationChanged:
+    address: cctv.configuration/camera.configuration.changed.v1
+    messages:
+      configurationChanged:
+        $ref: '#/components/messages/ConfigurationChanged'
+  mediaUploadRequested:
+    address: cctv.media/media.upload.requested.v1
+    messages:
+      mediaManifest:
+        $ref: '#/components/messages/MediaManifest'
+  mediaReady:
+    address: cctv.notifications/media.ready.v1
+    messages:
+      mediaReady:
+        $ref: '#/components/messages/MediaReady'
+operations:
+  publishDetection:
+    action: send
+    channel: { $ref: '#/channels/detectionCreated' }
+  receiveConfigurationChange:
+    action: receive
+    channel: { $ref: '#/channels/cameraConfigurationChanged' }
+  processMediaUpload:
+    action: receive
+    channel: { $ref: '#/channels/mediaUploadRequested' }
+  deliverTelegramNotification:
+    action: receive
+    channel: { $ref: '#/channels/mediaReady' }
+components:
+  messages:
+    DetectionEvent:
+      name: detection.created.v2
+      contentType: application/json
+      payload:
+        $ref: './schemas/detection-event.v2.schema.json'
+    ConfigurationChanged:
+      name: camera.configuration.changed.v1
+      contentType: application/json
+      payload:
+        $ref: './schemas/camera-configuration-changed.v1.schema.json'
+    MediaManifest:
+      name: media.upload.requested.v1
+      contentType: application/json
+      payload:
+        $ref: './schemas/media-manifest.v1.schema.json'
+    MediaReady:
+      name: media.ready.v1
+      contentType: application/json
+      payload:
+        type: object
+        required: [schemaVersion, eventId]
+        properties:
+          schemaVersion: { const: '1.0' }
+          eventId: { type: string, format: uuid }

@@ -1,0 +1,22 @@
+{
+  "name": "@cctv/messaging",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@cctv/contracts": "workspace:*",
+    "amqplib": "^0.10.9"
+  },
+  "devDependencies": {
+    "@cctv/tsconfig": "workspace:*",
+    "@types/amqplib": "^0.10.7",
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "@cctv/event-worker",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@cctv/backend-core": "workspace:*",
+    "@cctv/contracts": "workspace:*",
+    "@cctv/database": "workspace:*",
+    "@cctv/messaging": "workspace:*",
+    "mongoose": "^8.19.2"
+  },
+  "devDependencies": {
+    "@cctv/tsconfig": "workspace:*",
+    "@types/node": "^24.10.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}

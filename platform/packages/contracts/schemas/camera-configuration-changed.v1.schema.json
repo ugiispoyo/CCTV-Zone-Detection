@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://cctv.local/contracts/camera-configuration-changed.v1.schema.json",
+  "title": "CameraConfigurationChangedV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "cameraId", "action", "changedAt"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "cameraId": { "type": "string", "pattern": "^[a-fA-F0-9]{24}$" },
+    "zoneId": { "type": "string", "pattern": "^[a-fA-F0-9]{24}$" },
+    "action": {
+      "enum": [
+        "created",
+        "updated",
+        "enabled",
+        "disabled",
+        "deleted",
+        "zone.created",
+        "zone.updated",
+        "zone.deleted"
+      ]
+    },
+    "changedAt": { "type": "string", "format": "date-time" }
+  }
+}

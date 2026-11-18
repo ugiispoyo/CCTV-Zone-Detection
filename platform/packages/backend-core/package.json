@@ -1,0 +1,22 @@
+{
+  "name": "@cctv/backend-core",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.922.0",
+    "@aws-sdk/s3-request-presigner": "^3.922.0"
+  },
+  "devDependencies": {
+    "@cctv/tsconfig": "workspace:*",
+    "@types/node": "^24.10.0",
+    "typescript": "^5.9.3"
+  }
+}

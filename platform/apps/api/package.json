@@ -1,0 +1,42 @@
+{
+  "name": "@cctv/api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "nest build",
+    "dev": "nest start --watch",
+    "start": "node dist/main.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@cctv/backend-core": "workspace:*",
+    "@cctv/contracts": "workspace:*",
+    "@cctv/database": "workspace:*",
+    "@cctv/messaging": "workspace:*",
+    "@fastify/multipart": "^9.2.1",
+    "@fastify/static": "^10.1.11",
+    "@nestjs/common": "^11.1.8",
+    "@nestjs/config": "^4.0.2",
+    "@nestjs/core": "^11.1.8",
+    "@nestjs/mongoose": "^11.0.3",
+    "@nestjs/platform-fastify": "^11.1.8",
+    "@nestjs/platform-socket.io": "^11.1.8",
+    "@nestjs/swagger": "^11.2.1",
+    "@nestjs/websockets": "^11.1.8",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.2",
+    "fastify": "^5.6.2",
+    "mongoose": "^8.19.2",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "socket.io": "^4.8.1"
+  },
+  "devDependencies": {
+    "@cctv/tsconfig": "workspace:*",
+    "@nestjs/cli": "^11.0.10",
+    "@types/node": "^24.10.0",
+    "typescript": "^5.9.3"
+  }
+}

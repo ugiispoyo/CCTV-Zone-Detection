@@ -1,0 +1,27 @@
+{
+  "name": "cctv-platform",
+  "private": true,
+  "packageManager": "pnpm@10.20.0",
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev --filter=@cctv/api --filter=@cctv/dashboard --filter=@cctv/event-worker",
+    "dev:all": "turbo dev",
+    "dev:api": "pnpm --filter @cctv/api dev",
+    "dev:dashboard": "pnpm --filter @cctv/dashboard dev",
+    "dev:event-worker": "pnpm --filter @cctv/event-worker dev",
+    "dev:media-worker": "pnpm --filter @cctv/media-worker dev",
+    "dev:telegram-worker": "pnpm --filter @cctv/telegram-worker dev",
+    "infra:check": "node scripts/local-infrastructure.mjs check",
+    "infra:up": "node scripts/local-infrastructure.mjs up",
+    "infra:stop": "docker compose stop",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "format": "prettier --write .",
+    "clean": "turbo clean"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "turbo": "^2.5.8",
+    "typescript": "^5.9.3"
+  }
+}

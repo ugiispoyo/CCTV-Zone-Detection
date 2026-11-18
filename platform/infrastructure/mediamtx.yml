@@ -1,0 +1,31 @@
+logLevel: info
+
+api: true
+apiAddress: :9997
+apiAllowOrigins: ['http://localhost:5173']
+
+metrics: true
+metricsAddress: :9998
+
+rtsp: true
+rtspTransports: [tcp]
+rtspAddress: :8554
+
+rtmp: false
+srt: false
+playback: false
+
+hls: true
+hlsAddress: :8888
+hlsAllowOrigins: ['*']
+hlsVariant: lowLatency
+hlsAlwaysRemux: false
+
+webrtc: true
+webrtcAddress: :8889
+webrtcAllowOrigins: ['*']
+webrtcLocalUDPAddress: :8189
+webrtcIPsFromInterfaces: true
+
+paths:
+  all_others:
