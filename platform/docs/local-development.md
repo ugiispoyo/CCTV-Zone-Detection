@@ -43,7 +43,7 @@ Konfigurasi minimum local:
 
 ```dotenv
 API_PORT=4000
-DASHBOARD_ORIGIN=http://localhost:5173
+DASHBOARD_ORIGIN=http://localhost:5175
 MONGODB_URI=mongodb://localhost:27017/cctv_platform?replicaSet=rs0
 RABBITMQ_URL=amqp://guest:guest@localhost:5672
 MEDIA_STAGING_DIR=./staging-media
@@ -149,7 +149,7 @@ Verifikasi:
 
 ```bash
 curl http://localhost:4000/api/health
-open http://localhost:5173
+open http://localhost:5175
 open http://localhost:4000/docs
 ```
 

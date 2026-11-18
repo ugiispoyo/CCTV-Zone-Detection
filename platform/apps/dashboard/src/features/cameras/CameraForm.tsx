@@ -90,12 +90,12 @@ export function CameraForm({
       </label>
       <label className="field">
         <span>
-          Preview URL <small>— WebRTC/HLS gateway</small>
+          Preview URL <small>— opsional, kosongkan untuk preview CV otomatis</small>
         </span>
         <input
           value={input.previewUrl}
           onChange={(event) => set('previewUrl', event.target.value)}
-          placeholder="http://localhost:8889/camera-1/"
+          placeholder="Otomatis dari service CV"
         />
       </label>
       <label className="field">

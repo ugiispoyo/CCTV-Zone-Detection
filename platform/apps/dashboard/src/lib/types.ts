@@ -40,8 +40,8 @@ export type Zone = {
 export type DetectionEvent = {
   _id: string;
   eventId: string;
-  cameraId: Camera | string;
-  zoneId: Zone | string;
+  cameraId: Camera | string | null;
+  zoneId: Zone | string | null;
   occurredAt: string;
   objectType: 'person' | 'car' | 'motorcycle' | 'head';
   confidence: number;

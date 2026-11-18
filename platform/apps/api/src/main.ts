@@ -14,7 +14,8 @@ async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(AppModule, adapter);
   app.setGlobalPrefix('api');
   app.enableCors({
-    origin: process.env.DASHBOARD_ORIGIN?.split(',') ?? ['http://localhost:5173'],
+    origin: process.env.DASHBOARD_ORIGIN?.split(',') ?? ['http://localhost:5175'],
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
   });
   app.useGlobalPipes(

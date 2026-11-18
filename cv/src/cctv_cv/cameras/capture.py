@@ -1,3 +1,7 @@
+import os
+
+os.environ.setdefault("OPENCV_FFMPEG_CAPTURE_OPTIONS", "rtsp_transport;tcp")
+
 import cv2
 import numpy as np
 

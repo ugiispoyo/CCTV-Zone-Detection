@@ -4,6 +4,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { R2Storage } from '@cctv/backend-core';
 import { DetectionEventRecord, MODEL } from '@cctv/database';
 import { FilterQuery, Model } from 'mongoose';
+import { createReadStream } from 'node:fs';
+import { access, readdir } from 'node:fs/promises';
+import { join, resolve } from 'node:path';
+import type { MediaKind } from '@cctv/contracts';
 
 export type EventQuery = {
   cameraId?: string;
@@ -18,11 +22,13 @@ export type EventQuery = {
 @Injectable()
 export class EventsService {
   private readonly storage?: R2Storage;
+  private readonly localMediaDir: string;
 
   constructor(
     @InjectModel(MODEL.event) private readonly events: Model<DetectionEventRecord>,
     config: ConfigService,
   ) {
+    this.localMediaDir = resolve(config.get<string>('MEDIA_STAGING_DIR') ?? './staging-media');
     const endpoint = config.get<string>('R2_ENDPOINT');
     const accessKeyId = config.get<string>('R2_ACCESS_KEY_ID');
     const secretAccessKey = config.get<string>('R2_SECRET_ACCESS_KEY');
@@ -72,12 +78,40 @@ export class EventsService {
       .lean();
     if (!event) throw new NotFoundException('Event not found');
     const mediaUrls: Record<string, string> = {};
-    if (this.storage) {
-      for (const [kind, media] of Object.entries(event.media ?? {})) {
-        if (media?.objectKey) mediaUrls[kind] = await this.storage.signedReadUrl(media.objectKey);
+    for (const kind of ['face', 'body', 'frame', 'clip'] as const) {
+      const media = event.media?.[kind];
+      if (this.storage && media?.objectKey && !media.objectKey.startsWith('local:')) {
+        mediaUrls[kind] = await this.storage.signedReadUrl(media.objectKey);
+      } else if (await this.hasLocalMedia(event.eventId, kind)) {
+        mediaUrls[kind] = `/events/${event.eventId}/media/${kind}`;
       }
     }
     return { ...event, mediaUrls };
+  }
+
+  async localMedia(eventId: string, kind: MediaKind) {
+    if (!/^[0-9a-f-]{36}$/i.test(eventId)) throw new NotFoundException('Media not found');
+    const file = await this.findLocalMedia(eventId, kind);
+    if (!file) throw new NotFoundException('Media not found');
+    const mimeType = kind === 'clip' ? 'video/mp4' : file.endsWith('.png') ? 'image/png' : 'image/jpeg';
+    return { stream: createReadStream(file), mimeType };
+  }
+
+  private async hasLocalMedia(eventId: string, kind: MediaKind): Promise<boolean> {
+    return Boolean(await this.findLocalMedia(eventId, kind));
+  }
+
+  private async findLocalMedia(eventId: string, kind: MediaKind): Promise<string | undefined> {
+    const directory = join(this.localMediaDir, eventId);
+    try {
+      const filename = (await readdir(directory)).find((item) => item.startsWith(`${kind}.`));
+      if (!filename) return undefined;
+      const file = join(directory, filename);
+      await access(file);
+      return file;
+    } catch {
+      return undefined;
+    }
   }
 
   async summary() {

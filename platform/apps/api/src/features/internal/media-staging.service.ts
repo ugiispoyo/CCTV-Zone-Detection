@@ -1,7 +1,10 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MediaKind, MediaUploadMessage, StagedMedia } from '@cctv/contracts';
+import { DetectionEventRecord, MODEL } from '@cctv/database';
+import { InjectModel } from '@nestjs/mongoose';
 import { MultipartFile } from '@fastify/multipart';
+import { Model } from 'mongoose';
 import { createHash } from 'node:crypto';
 import { createWriteStream } from 'node:fs';
 import { mkdir, stat } from 'node:fs/promises';
@@ -15,7 +18,10 @@ const acceptedMimeTypes = new Set(['image/jpeg', 'image/png', 'video/mp4']);
 export class MediaStagingService {
   private readonly baseDir: string;
 
-  constructor(config: ConfigService) {
+  constructor(
+    config: ConfigService,
+    @InjectModel(MODEL.event) private readonly events: Model<DetectionEventRecord>,
+  ) {
     this.baseDir = resolve(config.get<string>('MEDIA_STAGING_DIR') ?? './staging-media');
   }
 
@@ -51,6 +57,21 @@ export class MediaStagingService {
     if (!files.body || !files.frame || !files.clip) {
       throw new BadRequestException('body, frame, and clip files are required');
     }
+    const media = Object.fromEntries(
+      Object.entries(files).map(([kind, file]) => [
+        kind,
+        {
+          objectKey: `local:${eventId}/${kind}`,
+          mimeType: file.mimeType,
+          size: file.size,
+          checksum: file.checksum,
+        },
+      ]),
+    );
+    await this.events.updateOne(
+      { eventId },
+      { $set: { status: 'ready', media, failureReason: null } },
+    );
     return { schemaVersion: '1.0', eventId, files };
   }
 }

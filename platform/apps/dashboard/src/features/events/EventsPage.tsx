@@ -2,10 +2,11 @@ import { useQuery } from '@tanstack/react-query';
 import { CalendarDays, ImageOff, ScanLine } from 'lucide-react';
 import { useState } from 'react';
 import { Badge, Card, EmptyState, Modal, PageHeader, Spinner } from '../../components/ui';
-import { api } from '../../lib/api';
+import { api, apiResourceUrl } from '../../lib/api';
 import type { Camera, DetectionEvent, Zone } from '../../lib/types';
 
-const labelOf = (value: Camera | Zone | string) => (typeof value === 'string' ? '—' : value.name);
+const labelOf = (value: Camera | Zone | string | null | undefined) =>
+  !value || typeof value === 'string' ? '—' : value.name;
 
 export function EventsPage() {
   const [selected, setSelected] = useState<string | null>(null);
@@ -46,6 +47,12 @@ export function EventsPage() {
       />
       {events.isLoading ? (
         <Spinner />
+      ) : events.isError ? (
+        <EmptyState
+          icon={<ImageOff />}
+          title="Kejadian gagal dimuat"
+          description={events.error instanceof Error ? events.error.message : 'Request gagal'}
+        />
       ) : !events.data?.items.length ? (
         <EmptyState
           icon={<ScanLine />}
@@ -62,7 +69,7 @@ export function EventsPage() {
             >
               <div className="event-card__media">
                 <ImageOff size={22} />
-                <span>Media tersimpan di R2</span>
+                <span>Media kejadian</span>
               </div>
               <div className="event-card__body">
                 <div>
@@ -97,6 +104,10 @@ export function EventsPage() {
         <Modal title="Detail kejadian" subtitle={selected} onClose={() => setSelected(null)}>
           {detail.isLoading ? (
             <Spinner />
+          ) : detail.isError ? (
+            <p className="form-error">
+              {detail.error instanceof Error ? detail.error.message : 'Detail kejadian gagal dimuat'}
+            </p>
           ) : (
             detail.data && (
               <div className="event-detail">
@@ -104,7 +115,7 @@ export function EventsPage() {
                   {(['face', 'body', 'frame'] as const).map((kind) =>
                     detail.data?.mediaUrls?.[kind] ? (
                       <figure key={kind}>
-                        <img src={detail.data.mediaUrls[kind]} alt={kind} />
+                        <img src={apiResourceUrl(detail.data.mediaUrls[kind])} alt={kind} />
                         <figcaption>{kind}</figcaption>
                       </figure>
                     ) : (
@@ -116,7 +127,11 @@ export function EventsPage() {
                   )}
                 </div>
                 {detail.data.mediaUrls?.clip && (
-                  <video className="event-video" src={detail.data.mediaUrls.clip} controls />
+                  <video
+                    className="event-video"
+                    src={apiResourceUrl(detail.data.mediaUrls.clip)}
+                    controls
+                  />
                 )}
               </div>
             )

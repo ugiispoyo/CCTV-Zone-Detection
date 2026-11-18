@@ -1,4 +1,14 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  NotFoundException,
+  Param,
+  Query,
+  Res,
+  StreamableFile,
+} from '@nestjs/common';
+import type { MediaKind } from '@cctv/contracts';
+import type { FastifyReply } from 'fastify';
 import { ApiQuery, ApiTags } from '@nestjs/swagger';
 import { EventsService } from './events.service';
 
@@ -34,6 +44,21 @@ export class EventsController {
       page: Math.max(1, Number(page) || 1),
       limit: Math.min(100, Math.max(1, Number(limit) || 24)),
     });
+  }
+
+  @Get(':eventId/media/:kind')
+  async media(
+    @Param('eventId') eventId: string,
+    @Param('kind') kind: MediaKind,
+    @Res({ passthrough: true }) reply: FastifyReply,
+  ) {
+    if (!['face', 'body', 'frame', 'clip'].includes(kind)) {
+      throw new NotFoundException('Media not found');
+    }
+    const media = await this.events.localMedia(eventId, kind);
+    reply.header('Content-Type', media.mimeType);
+    reply.header('Cache-Control', 'private, max-age=3600');
+    return new StreamableFile(media.stream);
   }
 
   @Get(':id')

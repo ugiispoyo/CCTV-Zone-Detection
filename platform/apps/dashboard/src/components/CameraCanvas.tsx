@@ -11,6 +11,12 @@ export function CameraCanvas({
   draft?: Point[];
   onPoint?: (point: Point) => void;
 }) {
+  const cvPreviewBase =
+    import.meta.env.VITE_CV_PREVIEW_URL?.replace(/\/$/, '') ??
+    `${window.location.protocol}//${window.location.hostname}:8090`;
+  const previewUrl =
+    camera.previewUrl?.trim() || `${cvPreviewBase}/api/v1/previews/${camera._id}`;
+
   const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (!onPoint) return;
     const bounds = event.currentTarget.getBoundingClientRect();
@@ -22,19 +28,11 @@ export function CameraCanvas({
 
   return (
     <div className="camera-canvas" onClick={handleClick}>
-      {camera.previewUrl ? (
-        <iframe
-          title={`Preview ${camera.name}`}
-          src={camera.previewUrl}
-          allow="autoplay; fullscreen"
-        />
-      ) : (
-        <div className="camera-placeholder">
-          <span className="camera-placeholder__glow" />
-          <strong>{camera.name}</strong>
-          <small>Preview stream belum tersedia</small>
-        </div>
-      )}
+      <iframe
+        title={`Preview ${camera.name}`}
+        src={previewUrl}
+        allow="autoplay; fullscreen"
+      />
       <svg viewBox="0 0 1000 562.5" preserveAspectRatio="none" aria-label="Overlay zona">
         {zones.map((zone) => {
           const points = zone.points

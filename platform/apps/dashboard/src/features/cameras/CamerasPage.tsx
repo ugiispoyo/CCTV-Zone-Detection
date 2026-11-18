@@ -15,6 +15,7 @@ export function CamerasPage() {
     mutationFn: ({ camera, input }: { camera?: Camera; input: CameraInput }) => {
       const payload = { ...input } as CameraInput;
       if (camera && !payload.rtspUrl) delete payload.rtspUrl;
+      if (!payload.previewUrl?.trim()) delete payload.previewUrl;
       return api<Camera>(
         camera ? `/cameras/${camera._id}` : '/cameras',
         json(camera ? 'PATCH' : 'POST', payload),
@@ -47,6 +48,12 @@ export function CamerasPage() {
           </Button>
         }
       />
+      {(remove.error || toggle.error) && (
+        <p className="form-error">
+          {(remove.error instanceof Error ? remove.error.message : undefined) ??
+            (toggle.error instanceof Error ? toggle.error.message : 'Operasi kamera gagal')}
+        </p>
+      )}
       {cameras.isLoading ? (
         <Spinner />
       ) : cameras.data?.length === 0 ? (

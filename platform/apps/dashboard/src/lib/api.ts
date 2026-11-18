@@ -31,3 +31,8 @@ export const json = (method: string, body?: unknown): RequestInit => ({
   method,
   body: body === undefined ? undefined : JSON.stringify(body),
 });
+
+export const apiResourceUrl = (value: string): string =>
+  /^https?:\/\//i.test(value)
+    ? value
+    : new URL(value.replace(/^\//, ''), `${API_URL.replace(/\/$/, '')}/`).toString();

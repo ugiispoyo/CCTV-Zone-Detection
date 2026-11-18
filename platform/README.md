@@ -42,7 +42,7 @@ belum tersedia.
 
 `pnpm dev` menjalankan API, dashboard, dan event worker. Akses lokal:
 
-- Dashboard Vite: `http://localhost:5173`
+- Dashboard Vite: `http://localhost:5175`
 - API Swagger: `http://localhost:4000/docs`
 - API health: `http://localhost:4000/api/health`
 - RabbitMQ management: `http://localhost:15672` (`guest` / `guest`)

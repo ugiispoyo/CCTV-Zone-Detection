@@ -168,6 +168,12 @@ export function ZoneEditorPage() {
               <span className="muted">{zones.data?.length ?? 0}</span>
             </div>
             <div className="zone-list">
+              {(remove.error || update.error) && (
+                <p className="form-error">
+                  {(remove.error instanceof Error ? remove.error.message : undefined) ??
+                    (update.error instanceof Error ? update.error.message : 'Operasi zona gagal')}
+                </p>
+              )}
               {zones.data?.map((zone) => (
                 <div className="zone-list__item" key={zone._id}>
                   <span className={`zone-swatch zone-swatch--${zone.kind}`} />
