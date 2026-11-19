@@ -4,7 +4,8 @@
   "packageManager": "pnpm@10.20.0",
   "scripts": {
     "build": "turbo build",
-    "dev": "turbo dev --filter=@cctv/api --filter=@cctv/dashboard --filter=@cctv/event-worker",
+    "dev": "turbo dev --filter=@cctv/api --filter=@cctv/dashboard --filter=@cctv/event-worker --filter=@cctv/media-worker --filter=@cctv/telegram-worker",
+    "dev:core": "turbo dev --filter=@cctv/api --filter=@cctv/dashboard --filter=@cctv/event-worker",
     "dev:all": "turbo dev",
     "dev:api": "pnpm --filter @cctv/api dev",
     "dev:dashboard": "pnpm --filter @cctv/dashboard dev",

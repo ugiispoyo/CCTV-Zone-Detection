@@ -40,7 +40,8 @@ pnpm dev
 kompatibel akan dipakai ulang meskipun nama containernya berbeda; Compose hanya memulai service yang
 belum tersedia.
 
-`pnpm dev` menjalankan API, dashboard, dan event worker. Akses lokal:
+`pnpm dev` menjalankan API, dashboard, event worker, media worker, dan Telegram worker. Gunakan
+`pnpm dev:core` jika credential R2/Telegram belum diisi. Akses lokal:
 
 - Dashboard Vite: `http://localhost:5175`
 - API Swagger: `http://localhost:4000/docs`
@@ -62,6 +63,10 @@ pnpm dev:telegram-worker
 
 Media dan Telegram worker membutuhkan konfigurasi R2 serta `TELEGRAM_BOT_TOKEN`. Panduan lengkap ada
 di [Local development](docs/local-development.md).
+
+Telegram memakai dua tahap: alert teks dikirim langsung dari event deteksi dengan target di bawah tiga
+detik, lalu album foto/video dikirim dari staging lokal setelah clip selesai. Upload R2 berjalan paralel
+di background dan tidak menahan Telegram maupun preview dashboard.
 
 ## Verifikasi
 

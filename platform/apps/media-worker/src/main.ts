@@ -33,6 +33,17 @@ async function bootstrap() {
   const stagingDir = isAbsolute(configuredStagingDir)
     ? configuredStagingDir
     : resolve(process.cwd(), '../api', configuredStagingDir);
+  const localRetentionMs = Math.max(
+    60_000,
+    Number(process.env.LOCAL_MEDIA_RETENTION_SECONDS ?? 3600) * 1000,
+  );
+  const cleanupLater = (directory: string) => {
+    const timer = setTimeout(
+      () => void rm(directory, { recursive: true, force: true }),
+      localRetentionMs,
+    );
+    timer.unref();
+  };
 
   const upload = async (message: MediaUploadMessage) => {
     const event = await events.findOne({ eventId: message.eventId });
@@ -42,11 +53,9 @@ async function bootstrap() {
     );
     if (alreadyUploaded) {
       const firstFile = Object.values(message.files).find(Boolean);
-      if (firstFile) await rm(dirname(firstFile.path), { recursive: true, force: true });
+      if (firstFile) cleanupLater(dirname(firstFile.path));
       return;
     }
-    event.status = 'media-processing';
-    await event.save();
 
     const date = event.occurredAt;
     const prefix = `events/${date.getUTCFullYear()}/${String(date.getUTCMonth() + 1).padStart(2, '0')}/${String(date.getUTCDate()).padStart(2, '0')}/${event.eventId}`;
@@ -77,7 +86,7 @@ async function bootstrap() {
       eventId: message.eventId,
     });
     const firstFile = Object.values(message.files).find(Boolean);
-    if (firstFile) await rm(dirname(firstFile.path), { recursive: true, force: true });
+    if (firstFile) cleanupLater(dirname(firstFile.path));
   };
 
   await rabbit.consume<MediaUploadMessage>({
@@ -134,7 +143,8 @@ async function stagedFiles(directory: string): Promise<Partial<Record<MediaKind,
     const fileStat = await stat(path);
     result[kind] = {
       path,
-      mimeType: kind === 'clip' ? 'video/mp4' : filename.endsWith('.png') ? 'image/png' : 'image/jpeg',
+      mimeType:
+        kind === 'clip' ? 'video/mp4' : filename.endsWith('.png') ? 'image/png' : 'image/jpeg',
       size: fileStat.size,
       checksum: await fileChecksum(path),
     };

@@ -129,8 +129,8 @@ Pilihan paling ringkas:
 pnpm dev
 ```
 
-Perintah tersebut menjalankan API, dashboard, dan event worker melalui Turborepo. Media worker serta
-Telegram worker tidak otomatis dijalankan karena credential eksternal mungkin belum tersedia.
+Perintah tersebut menjalankan API, dashboard, event worker, media worker, dan Telegram worker melalui
+Turborepo. Jika credential eksternal belum tersedia, gunakan `pnpm dev:core`.
 
 Untuk log yang terpisah, buka beberapa terminal:
 
@@ -168,7 +168,7 @@ R2_BUCKET=cctv-events
 TELEGRAM_BOT_TOKEN=...
 ```
 
-Lalu jalankan terminal tambahan:
+Jika memakai `pnpm dev:core`, jalankan terminal tambahan:
 
 ```bash
 pnpm dev:media-worker
@@ -178,7 +178,7 @@ pnpm dev:telegram-worker
 Atau jalankan seluruh aplikasi sekaligus setelah credential lengkap:
 
 ```bash
-pnpm dev:all
+pnpm dev
 ```
 
 File dari CV masuk ke `MEDIA_STAGING_DIR`, di-upload media worker ke R2, kemudian folder staging event

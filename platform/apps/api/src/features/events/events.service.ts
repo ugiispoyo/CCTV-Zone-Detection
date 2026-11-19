@@ -80,10 +80,10 @@ export class EventsService {
     const mediaUrls: Record<string, string> = {};
     for (const kind of ['face', 'body', 'frame', 'clip'] as const) {
       const media = event.media?.[kind];
-      if (this.storage && media?.objectKey && !media.objectKey.startsWith('local:')) {
-        mediaUrls[kind] = await this.storage.signedReadUrl(media.objectKey);
-      } else if (await this.hasLocalMedia(event.eventId, kind)) {
+      if (await this.hasLocalMedia(event.eventId, kind)) {
         mediaUrls[kind] = `/events/${event.eventId}/media/${kind}`;
+      } else if (this.storage && media?.objectKey && !media.objectKey.startsWith('local:')) {
+        mediaUrls[kind] = await this.storage.signedReadUrl(media.objectKey);
       }
     }
     return { ...event, mediaUrls };
@@ -93,7 +93,8 @@ export class EventsService {
     if (!/^[0-9a-f-]{36}$/i.test(eventId)) throw new NotFoundException('Media not found');
     const file = await this.findLocalMedia(eventId, kind);
     if (!file) throw new NotFoundException('Media not found');
-    const mimeType = kind === 'clip' ? 'video/mp4' : file.endsWith('.png') ? 'image/png' : 'image/jpeg';
+    const mimeType =
+      kind === 'clip' ? 'video/mp4' : file.endsWith('.png') ? 'image/png' : 'image/jpeg';
     return { stream: createReadStream(file), mimeType };
   }
 

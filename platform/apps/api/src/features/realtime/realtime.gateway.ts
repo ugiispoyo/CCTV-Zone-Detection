@@ -1,4 +1,4 @@
-import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { DetectionEventMessage, EXCHANGE, QUEUE, ROUTING_KEY } from '@cctv/contracts';
 import { Server } from 'socket.io';
@@ -20,6 +20,8 @@ export class RealtimeGateway {
 
 @Injectable()
 export class RealtimeDetectionConsumer implements OnApplicationBootstrap {
+  private readonly logger = new Logger(RealtimeDetectionConsumer.name);
+
   constructor(
     private readonly messaging: MessagingService,
     private readonly realtime: RealtimeGateway,
@@ -31,7 +33,13 @@ export class RealtimeDetectionConsumer implements OnApplicationBootstrap {
       routingKey: ROUTING_KEY.detectionCreated,
       queue: QUEUE.realtimeApi,
       prefetch: 32,
-      handler: async (event) => this.realtime.detectionEvent(event),
+      handler: async (event) => {
+        const latencyMs = Date.now() - new Date(event.occurredAt).getTime();
+        this.realtime.detectionEvent({ ...event, realtimeLatencyMs: latencyMs });
+        if (latencyMs > 1000) {
+          this.logger.warn(`Dashboard detection latency ${latencyMs}ms for ${event.eventId}`);
+        }
+      },
     });
   }
 }

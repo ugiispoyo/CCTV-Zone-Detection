@@ -8,15 +8,15 @@ Compose lokal hanya menjalankan MongoDB, RabbitMQ, dan MediaMTX:
 pnpm infra:up
 ```
 
-API, dashboard, dan event worker dijalankan dari host:
+Seluruh aplikasi host, termasuk media worker dan Telegram worker, dijalankan dengan:
 
 ```bash
 pnpm dev
 ```
 
 `mongo-init` menginisialisasi single-node replica set agar transaction/change stream dapat digunakan di
-fase berikutnya. Container init selesai lalu berhenti dengan exit code 0. Media worker dan Telegram worker
-dijalankan manual setelah credential eksternal tersedia. Lihat `docs/local-development.md`.
+fase berikutnya. Container init selesai lalu berhenti dengan exit code 0. Jika credential R2/Telegram
+belum tersedia, gunakan `pnpm dev:core`. Lihat `docs/local-development.md`.
 
 Wrapper `infra:up` memeriksa endpoint yang sudah tersedia dan hanya memulai service yang hilang. Dengan
 demikian, container dari project lain dapat dipakai ulang tanpa bergantung pada nama containernya.
@@ -37,7 +37,8 @@ VPN, private network, atau firewall allowlist.
 1. Buat bucket private, contoh `cctv-events`.
 2. Buat API token Object Read & Write khusus bucket.
 3. Isi `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, dan `R2_BUCKET`.
-4. Jangan membuat bucket publik; API membuat signed URL sementara untuk dashboard/Telegram.
+4. Jangan membuat bucket publik; API membuat signed URL sementara untuk dashboard, sedangkan
+   Telegram worker mengambil object secara privat lalu mengunggahnya langsung ke Telegram.
 5. Atur lifecycle R2 setelah kebijakan retensi disepakati.
 
 Object layout:
@@ -52,7 +53,10 @@ events/YYYY/MM/DD/{eventId}/clip.mp4
 ## Telegram
 
 Bot harus pernah di-start oleh user atau ditambahkan ke group tujuan. Daftarkan numeric Chat ID melalui
-dashboard. Telegram worker mengirim media group berisi crop yang tersedia, body, frame, dan video.
+dashboard. Telegram worker mengirim alert teks langsung dari event deteksi, lalu media group berisi crop
+yang tersedia, body, frame, dan video langsung dari staging lokal. Upload R2 berjalan paralel. File lokal
+dipertahankan selama `LOCAL_MEDIA_RETENTION_SECONDS` (default satu jam) agar Telegram dan fallback
+dashboard tidak bergantung pada ketersediaan R2.
 
 ## Volume
 
