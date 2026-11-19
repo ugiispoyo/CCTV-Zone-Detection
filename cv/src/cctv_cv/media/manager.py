@@ -86,9 +86,13 @@ class MediaManager:
             if not self.active:
                 self.loop.call_soon_threadsafe(self.idle.set)
 
-    def close(self) -> None:
+    def close(self, graceful: bool = True) -> None:
         for capture in self.active.values():
-            capture.writer.close()
+            if graceful:
+                capture.writer.close()
+            else:
+                capture.writer.abort()
+                shutil.rmtree(capture.directory, ignore_errors=True)
         self.active.clear()
         self.idle.set()
 

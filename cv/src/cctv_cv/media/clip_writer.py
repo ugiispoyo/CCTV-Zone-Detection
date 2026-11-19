@@ -32,6 +32,24 @@ class ClipWriter:
         if return_code != 0:
             raise RuntimeError(f"FFmpeg exited with {return_code}: {error[-1000:]}")
 
+    def abort(self) -> None:
+        if self.process is None:
+            return
+        process = self.process
+        self.process = None
+        if process.poll() is None:
+            process.terminate()
+            try:
+                process.wait(timeout=1)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait(timeout=1)
+        if process.stdin:
+            try:
+                process.stdin.close()
+            except OSError:
+                pass
+
     def _start(self, width: int, height: int) -> subprocess.Popen[bytes]:
         command = [
             imageio_ffmpeg.get_ffmpeg_exe(),

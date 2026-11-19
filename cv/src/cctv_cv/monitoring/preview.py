@@ -15,8 +15,11 @@ class PreviewHub:
     def __init__(self) -> None:
         self.previews: dict[str, _Preview] = {}
         self.condition = asyncio.Condition()
+        self.closed = False
 
     def demanded(self, camera_id: str, idle_timeout: int) -> bool:
+        if self.closed:
+            return False
         preview = self.previews.get(camera_id)
         if not preview:
             return False
@@ -24,11 +27,15 @@ class PreviewHub:
 
     async def touch(self, camera_id: str) -> None:
         async with self.condition:
+            if self.closed:
+                return
             preview = self.previews.setdefault(camera_id, _Preview())
             preview.touched_at = time.monotonic()
 
     async def publish(self, camera_id: str, jpeg: bytes) -> None:
         async with self.condition:
+            if self.closed:
+                return
             preview = self.previews.setdefault(camera_id, _Preview())
             preview.jpeg = jpeg
             preview.sequence += 1
@@ -46,9 +53,11 @@ class PreviewHub:
                     expected = sequence
 
                     def frame_changed(expected_sequence: int = expected) -> bool:
-                        return self.previews[camera_id].sequence != expected_sequence
+                        return self.closed or self.previews[camera_id].sequence != expected_sequence
 
                     await self.condition.wait_for(frame_changed)
+                    if self.closed:
+                        return
                     preview = self.previews[camera_id]
                     sequence = preview.sequence
                     jpeg = preview.jpeg
@@ -57,3 +66,8 @@ class PreviewHub:
         finally:
             async with self.condition:
                 self.previews[camera_id].viewers = max(0, self.previews[camera_id].viewers - 1)
+
+    async def close(self) -> None:
+        async with self.condition:
+            self.closed = True
+            self.condition.notify_all()

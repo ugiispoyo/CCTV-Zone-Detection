@@ -85,7 +85,12 @@ class CameraSupervisor:
 
     async def stop(self) -> None:
         self.stopping = True
-        await asyncio.gather(*(self._remove(camera_id) for camera_id in list(self.workers)))
+        await asyncio.gather(
+            *(
+                self._remove(camera_id, drain_media=False, force=True)
+                for camera_id in list(self.workers)
+            )
+        )
 
     def _add(self, camera: CameraConfig) -> None:
         media = MediaManager(self.settings, self.completed)
@@ -103,13 +108,15 @@ class CameraSupervisor:
         self.workers[camera.id] = worker
         self.tasks[camera.id] = asyncio.create_task(worker.run(), name=f"camera-{camera.id}")
 
-    async def _remove(self, camera_id: str) -> None:
+    async def _remove(self, camera_id: str, drain_media: bool = True, force: bool = False) -> None:
         worker = self.workers.pop(camera_id, None)
         task = self.tasks.pop(camera_id, None)
         self.media_managers.pop(camera_id, None)
         if worker:
-            await worker.stop()
+            await worker.stop(drain_media=drain_media)
         if task:
+            if force:
+                task.cancel()
             try:
                 await asyncio.wait_for(task, timeout=10)
             except TimeoutError:

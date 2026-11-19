@@ -58,6 +58,7 @@ class CameraWorker:
         self.last_inference = 0.0
         self.last_heartbeat = 0.0
         self.status = "connecting"
+        self.abort_media = False
 
     async def run(self) -> None:
         await self._status("connecting")
@@ -100,16 +101,17 @@ class CameraWorker:
                 await asyncio.sleep(max(0, 1 / self.settings.capture_fps - elapsed))
         finally:
             self.capture.close()
-            self.media.close()
+            self.media.close(graceful=not self.abort_media)
 
     def reconfigure(self, camera: CameraConfig) -> None:
         """Apply zone/schedule/preview changes without reconnecting RTSP."""
         self.camera = camera
         self.zones.reconfigure(camera)
 
-    async def stop(self) -> None:
+    async def stop(self, drain_media: bool = True) -> None:
         self.draining = True
-        if self.media.active:
+        self.abort_media = not drain_media
+        if drain_media and self.media.active:
             try:
                 await asyncio.wait_for(
                     self.media.idle.wait(), timeout=self.settings.clip_seconds + 2
