@@ -44,3 +44,22 @@ def test_line_crossing_supports_vehicle() -> None:
     events = evaluator.update([below], now + timedelta(milliseconds=100))
     assert events[0].object_type == ObjectType.CAR
     assert events[0].trigger == "line-crossed"
+
+
+def test_reconfigure_drops_state_for_deleted_zone() -> None:
+    camera = camera_with_line()
+    evaluator = ZoneEvaluator(camera, cooldown_seconds=1)
+    detection = Detection(
+        object_type=ObjectType.CAR,
+        confidence=0.9,
+        track_id="1",
+        box=Box(x=0.3, y=0.1, width=0.2, height=0.2),
+    )
+    evaluator.update([detection])
+    assert evaluator.states
+
+    updated = camera.model_copy(update={"zones": []})
+    evaluator.reconfigure(updated)
+
+    assert evaluator.camera is updated
+    assert evaluator.states == {}

@@ -45,6 +45,8 @@ export type DetectionEvent = {
   occurredAt: string;
   objectType: 'person' | 'car' | 'motorcycle' | 'head';
   confidence: number;
+  headBox?: { x: number; y: number; width: number; height: number } | null;
+  faceBox?: { x: number; y: number; width: number; height: number } | null;
   trigger: string;
   status: string;
   media?: Record<string, { objectKey: string; mimeType: string }>;

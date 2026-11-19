@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { CalendarDays, ImageOff, ScanLine } from 'lucide-react';
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Badge, Card, EmptyState, Modal, PageHeader, Spinner } from '../../components/ui';
 import { api, apiResourceUrl } from '../../lib/api';
 import type { Camera, DetectionEvent, Zone } from '../../lib/types';
@@ -9,8 +10,19 @@ const labelOf = (value: Camera | Zone | string | null | undefined) =>
   !value || typeof value === 'string' ? '—' : value.name;
 
 export function EventsPage() {
-  const [selected, setSelected] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selected = searchParams.get('eventId');
   const [cameraId, setCameraId] = useState('');
+  const openEvent = (eventId: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set('eventId', eventId);
+    setSearchParams(next);
+  };
+  const closeEvent = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('eventId');
+    setSearchParams(next, { replace: true });
+  };
   const cameras = useQuery({ queryKey: ['cameras'], queryFn: () => api<Camera[]>('/cameras') });
   const events = useQuery({
     queryKey: ['events', cameraId],
@@ -65,7 +77,7 @@ export function EventsPage() {
             <Card
               className="event-card"
               key={event.eventId}
-              onClick={() => setSelected(event.eventId)}
+              onClick={() => openEvent(event.eventId)}
             >
               <div className="event-card__media">
                 <ImageOff size={22} />
@@ -101,7 +113,7 @@ export function EventsPage() {
         </div>
       )}
       {selected && (
-        <Modal title="Detail kejadian" subtitle={selected} onClose={() => setSelected(null)}>
+        <Modal title="Detail kejadian" subtitle={selected} onClose={closeEvent} wide>
           {detail.isLoading ? (
             <Spinner />
           ) : detail.isError ? (
@@ -114,14 +126,30 @@ export function EventsPage() {
                 <div className="media-gallery">
                   {(['face', 'body', 'frame'] as const).map((kind) =>
                     detail.data?.mediaUrls?.[kind] ? (
-                      <figure key={kind}>
+                      <figure className={`media-asset media-asset--${kind}`} key={kind}>
                         <img src={apiResourceUrl(detail.data.mediaUrls[kind])} alt={kind} />
-                        <figcaption>{kind}</figcaption>
+                        <figcaption>
+                          {kind === 'face'
+                            ? detail.data.faceBox
+                              ? 'face'
+                              : detail.data.headBox
+                                ? 'head'
+                                : 'face / head'
+                            : kind === 'body'
+                              ? 'body crop'
+                              : 'full frame'}
+                        </figcaption>
                       </figure>
                     ) : (
-                      <figure className="media-missing" key={kind}>
+                      <figure
+                        className={`media-asset media-asset--${kind} media-missing`}
+                        key={kind}
+                      >
                         <ImageOff />
-                        <figcaption>{kind} tidak tersedia</figcaption>
+                        <figcaption>
+                          {kind === 'face' ? 'face / head' : kind === 'body' ? 'body crop' : 'full frame'}{' '}
+                          tidak tersedia
+                        </figcaption>
                       </figure>
                     ),
                   )}

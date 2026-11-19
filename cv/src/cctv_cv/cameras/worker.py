@@ -62,43 +62,50 @@ class CameraWorker:
     async def run(self) -> None:
         await self._status("connecting")
         backoff = 1.0
-        while not self.stopping:
-            loop_started = time.monotonic()
-            detection_active = not self.draining and self._detection_active()
-            preview_active = self.previews.demanded(
-                self.camera.id, self.camera.preview.idleTimeoutSeconds
-            )
-            recording_active = bool(self.media.active)
-            if not detection_active and not preview_active and not recording_active:
-                self.capture.close()
-                CAMERA_CONNECTED.labels(self.camera.id).set(0)
-                await self._status("scheduled-off")
-                await asyncio.sleep(1)
-                continue
-            if self.capture.capture is None and not await asyncio.to_thread(self.capture.open):
-                await self._status("reconnecting", "RTSP connection failed")
-                await asyncio.sleep(backoff)
-                backoff = min(30, backoff * 2)
-                continue
-            backoff = 1
-            success, frame = await asyncio.to_thread(self.capture.read)
-            if not success or frame is None:
-                self.capture.close()
-                CAMERA_CONNECTED.labels(self.camera.id).set(0)
-                await self._status("reconnecting", "RTSP read failed")
-                continue
-            CAMERA_CONNECTED.labels(self.camera.id).set(1)
-            CAMERA_FRAMES.labels(self.camera.id).inc()
-            await self._status("online")
-            try:
-                await self._process(frame, detection_active, preview_active)
-            except Exception as error:
-                log.exception("frame_processing_failed", camera_id=self.camera.id)
-                await self._status("error", type(error).__name__)
-            elapsed = time.monotonic() - loop_started
-            await asyncio.sleep(max(0, 1 / self.settings.capture_fps - elapsed))
-        self.capture.close()
-        self.media.close()
+        try:
+            while not self.stopping:
+                loop_started = time.monotonic()
+                detection_active = not self.draining and self._detection_active()
+                preview_active = self.previews.demanded(
+                    self.camera.id, self.camera.preview.idleTimeoutSeconds
+                )
+                recording_active = bool(self.media.active)
+                if not detection_active and not preview_active and not recording_active:
+                    self.capture.close()
+                    CAMERA_CONNECTED.labels(self.camera.id).set(0)
+                    await self._status("scheduled-off")
+                    await asyncio.sleep(1)
+                    continue
+                if self.capture.capture is None and not await asyncio.to_thread(self.capture.open):
+                    await self._status("reconnecting", "RTSP connection failed")
+                    await asyncio.sleep(backoff)
+                    backoff = min(30, backoff * 2)
+                    continue
+                backoff = 1
+                success, frame = await asyncio.to_thread(self.capture.read)
+                if not success or frame is None:
+                    self.capture.close()
+                    CAMERA_CONNECTED.labels(self.camera.id).set(0)
+                    await self._status("reconnecting", "RTSP read failed")
+                    continue
+                CAMERA_CONNECTED.labels(self.camera.id).set(1)
+                CAMERA_FRAMES.labels(self.camera.id).inc()
+                await self._status("online")
+                try:
+                    await self._process(frame, detection_active, preview_active)
+                except Exception as error:
+                    log.exception("frame_processing_failed", camera_id=self.camera.id)
+                    await self._status("error", type(error).__name__)
+                elapsed = time.monotonic() - loop_started
+                await asyncio.sleep(max(0, 1 / self.settings.capture_fps - elapsed))
+        finally:
+            self.capture.close()
+            self.media.close()
+
+    def reconfigure(self, camera: CameraConfig) -> None:
+        """Apply zone/schedule/preview changes without reconnecting RTSP."""
+        self.camera = camera
+        self.zones.reconfigure(camera)
 
     async def stop(self) -> None:
         self.draining = True
@@ -119,22 +126,32 @@ class CameraWorker:
             self.settings.detection_fps if detection_active else self.camera.preview.inferenceFps
         )
         now = time.monotonic()
-        if now - self.last_inference >= 1 / target_fps:
+        inference_interval = 1 / target_fps
+        if self.last_inference == 0 or now - self.last_inference >= inference_interval:
             with INFERENCE_SECONDS.labels(self.camera.id).time():
                 detections = await asyncio.to_thread(self.detector.detect, frame)
             self.last_detections = self.tracker.update(detections)
-            self.last_inference = now
+            # Preserve the fractional cadence between capture ticks. Resetting to
+            # `now` here turns 8 FPS into 6 FPS when capture runs at 12 FPS.
+            self.last_inference = (
+                now
+                if self.last_inference == 0
+                else max(self.last_inference + inference_interval, now - inference_interval)
+            )
             for detection in self.last_detections:
                 DETECTIONS.labels(self.camera.id, detection.object_type.value).inc()
             if detection_active:
                 await self._handle_triggers(frame)
         if preview_active:
-            annotated = _annotate(frame, self.last_detections)
-            success, encoded = cv2.imencode(
-                ".jpg", annotated, [cv2.IMWRITE_JPEG_QUALITY, self.settings.jpeg_quality]
+            encoded = await asyncio.to_thread(
+                _encode_preview,
+                frame,
+                self.last_detections,
+                self.camera.preview.showBoundingBoxes,
+                self.camera.preview.quality,
             )
-            if success:
-                await self.previews.publish(self.camera.id, encoded.tobytes())
+            if encoded is not None:
+                await self.previews.publish(self.camera.id, encoded)
 
     async def _handle_triggers(self, frame: np.ndarray) -> None:
         for trigger in self.zones.update(self.last_detections):
@@ -233,3 +250,24 @@ def _annotate(frame: np.ndarray, detections: list[Detection]) -> np.ndarray:
         label = f"{item.object_type.value} #{item.track_id} {item.confidence:.2f}"
         cv2.putText(output, label, (x1, max(20, y1 - 8)), cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 2)
     return output
+
+
+def _encode_preview(
+    frame: np.ndarray,
+    detections: list[Detection],
+    show_bounding_boxes: bool,
+    quality: str,
+) -> bytes | None:
+    widths = {"low": 640, "medium": 960, "high": 1280}
+    jpeg_qualities = {"low": 60, "medium": 72, "high": 82}
+    profile = quality if quality in widths else "medium"
+    height, width = frame.shape[:2]
+    target_width = min(width, widths[profile])
+    if target_width < width:
+        target_height = max(1, round(height * target_width / width))
+        frame = cv2.resize(frame, (target_width, target_height), interpolation=cv2.INTER_AREA)
+    output = _annotate(frame, detections) if show_bounding_boxes else frame
+    success, encoded = cv2.imencode(
+        ".jpg", output, [cv2.IMWRITE_JPEG_QUALITY, jpeg_qualities[profile]]
+    )
+    return encoded.tobytes() if success else None

@@ -18,6 +18,11 @@ class ZoneEvaluator:
         self.cooldown_seconds = cooldown_seconds
         self.states: dict[tuple[str, str, str], _ZoneState] = {}
 
+    def reconfigure(self, camera: CameraConfig) -> None:
+        self.camera = camera
+        zone_ids = {zone.id for zone in camera.zones}
+        self.states = {key: state for key, state in self.states.items() if key[0] in zone_ids}
+
     def update(self, detections: list[Detection], at: datetime | None = None) -> list[ZoneTrigger]:
         occurred_at = at or datetime.now(UTC)
         triggers: list[ZoneTrigger] = []

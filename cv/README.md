@@ -27,6 +27,11 @@ uv run cctv-cv
 Health check dan dokumentasi HTTP tersedia di `http://localhost:8090/docs`. Preview kamera dapat
 dipasang ke field `previewUrl` sebagai `http://localhost:8090/api/v1/previews/<cameraId>`.
 
+Preview RTSP memakai strategi latest-frame: reader terus menguras stream kamera dan membuang
+frame lama ketika inference/encoding sedang sibuk. Profil kualitas kamera juga mengatur ukuran
+preview (`low` 640 px, `medium` 960 px, `high` 1280 px), sehingga live view tetap dekat real-time
+tanpa mengubah resolusi frame yang dipakai untuk deteksi dan media kejadian.
+
 ## Menjalankan dan menghentikan service
 
 Jalankan CV dari terminal di folder `cv`:
@@ -109,7 +114,4 @@ uv run ruff format --check .
 uv run mypy src
 uv run pytest
 ```
-
-Repository ini sengaja tidak dimasukkan ke Turborepo `platform`; lifecycle dependency dan deployment
-CV berbeda dari Node.js apps.
 

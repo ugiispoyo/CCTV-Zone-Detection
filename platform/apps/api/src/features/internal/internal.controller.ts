@@ -45,7 +45,6 @@ export class InternalController {
   @ApiOperation({ summary: 'HTTP fallback for publishing a CV detection event' })
   async detection(@Body() input: DetectionEventDto) {
     await this.messaging.publish(EXCHANGE.detections, ROUTING_KEY.detectionCreated, input);
-    this.realtime.detectionEvent(input);
     return { accepted: true, eventId: input.eventId };
   }
 

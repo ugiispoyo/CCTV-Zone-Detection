@@ -10,6 +10,7 @@ import {
 import { NavLink, Outlet } from 'react-router-dom';
 import { useUiStore } from '../store/ui.store';
 import { Button } from './ui';
+import { DetectionToasts } from './DetectionToasts';
 
 const navigation = [
   { to: '/', label: 'Ringkasan', icon: LayoutDashboard, end: true },
@@ -25,6 +26,7 @@ export function AppShell() {
 
   return (
     <div className={`app-shell ${collapsed ? 'app-shell--collapsed' : ''}`}>
+      <DetectionToasts />
       <aside className="sidebar">
         <div className="brand">
           <span className="brand__mark">
@@ -32,7 +34,7 @@ export function AppShell() {
           </span>
           {!collapsed && (
             <div>
-              <strong>Sentinel</strong>
+              <strong>CCTV Detection</strong>
               <small>Zone intelligence</small>
             </div>
           )}

@@ -1,4 +1,6 @@
 import asyncio
+import signal
+from types import FrameType
 
 import structlog
 import uvicorn
@@ -12,6 +14,16 @@ from .supervisor import CameraSupervisor
 log = structlog.get_logger()
 
 
+class LoggedServer(uvicorn.Server):
+    def handle_exit(self, sig: int, frame: FrameType | None) -> None:
+        try:
+            signal_name = signal.Signals(sig).name
+        except ValueError:
+            signal_name = str(sig)
+        log.warning("shutdown_signal_received", signal=signal_name)
+        super().handle_exit(sig, frame)
+
+
 class Application:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
@@ -19,7 +31,7 @@ class Application:
         self.messaging = RabbitMessaging(settings.rabbitmq_url, settings.worker_id)
         self.previews = PreviewHub()
         self.supervisor = CameraSupervisor(settings, self.platform, self.messaging, self.previews)
-        self.http_server = uvicorn.Server(
+        self.http_server = LoggedServer(
             uvicorn.Config(
                 create_http_app(self.previews, lambda: self.supervisor.loaded),
                 host=settings.http_host,

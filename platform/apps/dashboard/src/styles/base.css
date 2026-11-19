@@ -192,6 +192,9 @@ p {
 .modal {
   @apply max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-white/10 bg-ink-900 shadow-2xl;
 }
+.modal--wide {
+  @apply max-w-6xl;
+}
 .modal__header {
   @apply sticky top-0 z-10 flex items-start justify-between border-b border-white/7 bg-ink-900/95 px-6 py-5 backdrop-blur;
 }

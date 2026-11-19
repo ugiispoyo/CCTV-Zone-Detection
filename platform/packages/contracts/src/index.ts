@@ -68,6 +68,7 @@ export const ROUTING_KEY = {
 
 export const QUEUE = {
   eventWorker: 'platform.event-worker.v2',
+  realtimeApi: 'platform.api-realtime.v2',
   mediaWorker: 'platform.media-worker.v1',
   telegramWorker: 'platform.telegram-worker.v1',
 } as const;

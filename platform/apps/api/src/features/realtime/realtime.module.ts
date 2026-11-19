@@ -1,6 +1,9 @@
 import { Global, Module } from '@nestjs/common';
-import { RealtimeGateway } from './realtime.gateway';
+import { RealtimeDetectionConsumer, RealtimeGateway } from './realtime.gateway';
 
 @Global()
-@Module({ providers: [RealtimeGateway], exports: [RealtimeGateway] })
+@Module({
+  providers: [RealtimeGateway, RealtimeDetectionConsumer],
+  exports: [RealtimeGateway],
+})
 export class RealtimeModule {}

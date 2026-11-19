@@ -35,7 +35,11 @@ def create_http_app(previews: PreviewHub, readiness: Callable[[], bool]) -> Fast
         return StreamingResponse(
             previews.stream(camera_id),
             media_type="multipart/x-mixed-replace; boundary=frame",
-            headers={"Cache-Control": "no-store"},
+            headers={
+                "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+                "Pragma": "no-cache",
+                "X-Accel-Buffering": "no",
+            },
         )
 
     @app.get("/api/v1/previews/{camera_id}", response_class=HTMLResponse)

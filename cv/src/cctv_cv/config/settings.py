@@ -26,8 +26,8 @@ class Settings(BaseSettings):
     target_classes: str = "person,car,motorcycle,head"
     detection_confidence: float = Field(default=0.45, ge=0, le=1)
     detection_iou: float = Field(default=0.50, ge=0, le=1)
-    detection_fps: float = Field(default=5, gt=0, le=60)
-    capture_fps: float = Field(default=10, gt=0, le=60)
+    detection_fps: float = Field(default=8, gt=0, le=60)
+    capture_fps: float = Field(default=12, gt=0, le=60)
 
     face_model_path: Path = Path("models/face_detection_yunet_2023mar.onnx")
     face_confidence: float = Field(default=0.85, ge=0, le=1)

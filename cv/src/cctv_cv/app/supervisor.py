@@ -41,11 +41,13 @@ class CameraSupervisor:
         await self.refresh()
         uploader = asyncio.create_task(self._upload_loop(), name="media-uploader")
         poller = asyncio.create_task(self._poll_loop(), name="configuration-poller")
+        watcher = asyncio.create_task(self._watch_loop(), name="camera-worker-watcher")
         try:
-            await asyncio.gather(uploader, poller)
+            await asyncio.gather(uploader, poller, watcher)
         finally:
             uploader.cancel()
             poller.cancel()
+            watcher.cancel()
 
     async def refresh(self) -> None:
         async with self.refresh_lock:
@@ -65,6 +67,15 @@ class CameraSupervisor:
                     and not task.done()
                     and existing.camera.model_dump() == camera.model_dump()
                 ):
+                    continue
+                if (
+                    existing
+                    and task
+                    and not task.done()
+                    and existing.camera.rtspUrl == camera.rtspUrl
+                ):
+                    existing.reconfigure(camera)
+                    log.info("camera_reconfigured", camera_id=camera_id)
                     continue
                 if existing:
                     await self._remove(camera_id)
@@ -103,8 +114,14 @@ class CameraSupervisor:
                 await asyncio.wait_for(task, timeout=10)
             except TimeoutError:
                 task.cancel()
+                try:
+                    await task
+                except asyncio.CancelledError:
+                    pass
             except asyncio.CancelledError:
                 pass
+            except Exception:
+                log.exception("camera_worker_failed_while_removing", camera_id=camera_id)
 
     async def _poll_loop(self) -> None:
         while not self.stopping:
@@ -113,6 +130,26 @@ class CameraSupervisor:
                 await self.refresh()
             except Exception:
                 log.exception("configuration_refresh_failed")
+
+    async def _watch_loop(self) -> None:
+        while not self.stopping:
+            await asyncio.sleep(2)
+            failed = [camera_id for camera_id, task in self.tasks.items() if task.done()]
+            if not failed:
+                continue
+            for camera_id in failed:
+                task = self.tasks.get(camera_id)
+                if task and not task.cancelled():
+                    error = task.exception()
+                    log.error(
+                        "camera_worker_stopped_unexpectedly",
+                        camera_id=camera_id,
+                        error=repr(error) if error else "worker returned",
+                    )
+            try:
+                await self.refresh()
+            except Exception:
+                log.exception("camera_worker_recovery_failed", camera_ids=failed)
 
     async def _upload_loop(self) -> None:
         await self._enqueue_existing_spool()
@@ -132,6 +169,7 @@ class CameraSupervisor:
                 SPOOL_BYTES.set(_directory_size(self.settings.spool_dir))
 
     async def _enqueue_existing_spool(self) -> None:
+        self.settings.spool_dir.mkdir(parents=True, exist_ok=True)
         for directory in self.settings.spool_dir.iterdir():
             if not directory.is_dir():
                 continue
